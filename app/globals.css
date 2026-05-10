@@ -1,0 +1,52 @@
+* { box-sizing: border-box; }
+body { margin: 0; font-family: Arial, Helvetica, sans-serif; background: #f5f7fb; color: #111827; }
+button { cursor: pointer; }
+.container { max-width: 1180px; margin: 0 auto; padding: 28px; }
+.topbar { display: flex; gap: 8px; margin-bottom: 18px; }
+.nav-link { display: inline-flex; align-items: center; min-height: 36px; border: 1px solid #d1d5db; border-radius: 8px; padding: 8px 12px; color: #111827; text-decoration: none; font-size: 13px; font-weight: 700; background: #fff; }
+.nav-link.active { background: #111827; border-color: #111827; color: #fff; }
+.card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 22px; box-shadow: 0 8px 30px rgba(15,23,42,.06); }
+.grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.label { font-size: 13px; font-weight: 700; margin: 14px 0 8px; }
+.input, textarea { width: 100%; border: 1px solid #d1d5db; border-radius: 12px; padding: 12px; font-size: 14px; background: white; }
+textarea { min-height: 260px; resize: vertical; }
+.code-area { min-height: 520px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace; font-size: 12px; line-height: 1.45; }
+.small-area { min-height: 180px; font-size: 12px; line-height: 1.45; }
+.actions { margin-top: 16px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.btn { border: 0; border-radius: 12px; padding: 12px 16px; font-weight: 700; background: #111827; color: white; }
+.btn.secondary { background: #374151; }
+.btn:disabled { opacity: .6; cursor: not-allowed; }
+.preview { background: white; border: 1px solid #e5e7eb; border-radius: 16px; overflow: auto; max-height: 800px; }
+.resume-page { width: 794px; min-height: 1123px; padding: 42px 48px; margin: 0 auto; background: white; color: #111827; font-family: Arial, Helvetica, sans-serif; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.resume-header { text-align: center; border-bottom: 2px solid #111827; padding-bottom: 12px; }
+.resume-name { font-size: 28px; font-weight: 800; letter-spacing: .5px; }
+.resume-title { font-size: 14px; margin-top: 5px; }
+.resume-contact { font-size: 11px; margin-top: 7px; color: #374151; }
+.resume-contact a { color: #374151; text-decoration: none; }
+.resume-section { break-inside: auto; page-break-inside: auto; }
+.section-title { font-size: 13px; font-weight: 800; letter-spacing: .8px; border-bottom: 1px solid #9ca3af; margin-top: 18px; padding-bottom: 4px; text-transform: uppercase; }
+.section-title { break-after: avoid; page-break-after: avoid; }
+.section-title::after { content: ""; display: block; height: 42px; margin-bottom: -42px; break-inside: avoid; }
+.resume-page p, .resume-page li { font-size: 12px; line-height: 1.45; }
+.project-stack { margin: 5px 0 0; }
+.resume-entry, .project-entry { break-inside: avoid; page-break-inside: avoid; }
+.role-row { display: flex; justify-content: space-between; gap: 10px; margin-top: 10px; font-size: 12px; }
+.company { font-weight: 800; }
+.role { font-weight: 700; color: #374151; }
+.skill-list { margin-top: 8px; }
+.skill-row { display: grid; grid-template-columns: 150px 1fr; gap: 10px; font-size: 12px; line-height: 1.45; margin-top: 3px; }
+.skill-label { font-weight: 800; }
+ul { margin: 6px 0 0 18px; padding: 0; }
+.cover-page { width: 794px; min-height: 1123px; margin: 0 auto; background: white; font-family: Arial, Helvetica, sans-serif; }
+.cover-header { background: #242424; color: #e8dfdb; padding: 28px 58px 30px; }
+.cover-name { font-size: 28px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase; }
+.cover-contact { font-size: 13px; margin-top: 12px; }
+.cover-date { font-size: 14px; font-weight: 800; letter-spacing: 1px; margin-top: 38px; }
+.cover-role { font-size: 13px; margin-top: 18px; }
+.cover-company { font-size: 13px; margin-top: 2px; }
+.cover-body { padding: 42px 58px 58px; }
+.cover-page p { font-size: 13px; line-height: 1.65; }
+.cover-signoff { font-size: 13px; line-height: 1.65; margin-top: 28px; }
+.cover-signature { font-size: 13px; font-weight: 800; margin-top: 4px; }
+.notice { font-size: 13px; color: #6b7280; }
+@media(max-width: 900px) { .grid { grid-template-columns: 1fr; } .resume-page, .cover-page { width: 100%; } }
