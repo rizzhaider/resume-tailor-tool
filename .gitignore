@@ -2,6 +2,7 @@
 .env*.local
 
 .next
+.cache
 node_modules
 
 dist
