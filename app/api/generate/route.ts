@@ -99,20 +99,33 @@ export async function POST(req: NextRequest) {
     const buffer = Buffer.from(await resumeFile.arrayBuffer());
     const resumeText = (await parsePdfText(buffer)).slice(0, 15000);
 
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (!apiKey) {
+    const openAiKey = process.env.OPENAI_API_KEY;
+    const geminiKey = process.env.GEMINI_API_KEY;
+    if (!openAiKey && !geminiKey) {
       return NextResponse.json(mockResponse(resumeText, jobDescription, company, role));
     }
 
-    const content = await generateWithGemini({
-      apiKey,
-      model: process.env.GEMINI_MODEL || 'gemini-2.5-pro',
-      resumeText,
-      jobDescription,
-      company,
-      role,
-      extraInstructions
-    });
+    const content = openAiKey
+      ? await generateWithOpenAI({
+          apiKey: openAiKey,
+          model: process.env.OPENAI_MODEL || 'gpt-4.1',
+          resumeText,
+          jobDescription,
+          company,
+          role,
+          extraInstructions
+        })
+      : await generateWithGemini({
+          // Gemini is intentionally kept as a backup provider. To use it later,
+          // remove OPENAI_API_KEY from the environment and keep GEMINI_API_KEY.
+          apiKey: geminiKey as string,
+          model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
+          resumeText,
+          jobDescription,
+          company,
+          role,
+          extraInstructions
+        });
 
     const json = JSON.parse(content) as GenerateResponse;
     return NextResponse.json(applyBaseProfile(json));
@@ -275,6 +288,155 @@ Hard review gates:
       responseMimeType: 'application/json'
     }
   });
+}
+
+async function generateWithOpenAI({
+  apiKey,
+  model,
+  resumeText,
+  jobDescription,
+  company,
+  role,
+  extraInstructions
+}: {
+  apiKey: string;
+  model: string;
+  resumeText: string;
+  jobDescription: string;
+  company: string;
+  role: string;
+  extraInstructions: string;
+}) {
+  const targetPosition = role || 'Frontend / Fullstack Developer';
+  const jdSkillSignals = formatJdSkillSignals(jobDescription);
+  const userInstructionBlock = formatExtraInstructions(extraInstructions);
+  const firstDraft = await callOpenAI(apiKey, model, {
+    instructions: `You are an expert resume writer, ATS optimizer, and technical recruiter for Frontend and Fullstack Developer roles. Create a deeply JD-tailored resume and cover letter as strict JSON.
+
+Rules:
+- The candidate's target profile is always Frontend / Fullstack Developer with 10+ years of experience.
+- Fixed candidate details: Rizwan Haider, Frontend / Fullstack Developer, rizwan02riz@gmail.com, +917275255918, LinkedIn https://www.linkedin.com/in/rizwan-haider-b2446b82/.
+- Do not invent fake employers, degrees, certifications, tools, metrics, or unsupported achievements.
+- Mirror the JD language directly when supported: stack names, responsibility verbs, product/domain wording, seniority terms, testing/performance/accessibility terms, architecture terms.
+- Restructure bullets around the JD, not the old resume order: lead with JD-matched responsibility or stack, then supported action, then outcome.
+- Do not use Markdown formatting anywhere. Return plain text strings only; no **, __, backticks, HTML, or decorative emphasis.
+- Do not include a professional summary.
+- Resume order must be Professional Experience, Technical Skills, Projects, Education, Certifications.
+- Technical Skills must use category strings: "Programming Languages: ...", "Frontend: ...", "Backend/Tools: ...", "Testing Tools: ...", "State Management: ...", "DevOps/CI-CD Tools: ...", "Architecture: ...", "Others: ...".
+- Add important JD-requested skills/tools to the correct Technical Skills category for ATS. If direct resume evidence is missing, add them as "Gap Skills:" or "Gap:" in matchSummary, not as experience claims.
+- Preserve and slightly enhance the AI-assisted development achievement with Cursor and OpenAI Codex explicitly named.
+- Cover letter must be efficient, confident, JD-specific, 180-260 words, and connect the candidate's evidence to the company, role, stack, and 2-4 JD responsibilities.
+- Return JSON only matching this shape: {"resume":{"name":"","title":"Frontend / Fullstack Developer","email":"","phone":"","location":"","linkedin":"","portfolio":"","experience":[{"company":"","role":"","location":"","duration":"","bullets":[]}],"skills":[],"projects":[{"name":"","techStack":"","bullets":[]}],"education":[{"degree":"","institute":"","year":""}],"certifications":[]},"coverLetter":"","matchSummary":[]}`,
+    input: `Candidate fixed profile:
+Name: Rizwan Haider
+Experience: 10+ years
+Profile: Frontend / Fullstack Developer
+Email: rizwan02riz@gmail.com
+Phone: +917275255918
+LinkedIn: https://www.linkedin.com/in/rizwan-haider-b2446b82/
+
+Current resume text:
+${resumeText}
+
+Target company: ${company || 'Not specified'}
+Target position: ${targetPosition}
+
+Detected JD skill signals from the application scanner:
+${jdSkillSignals}${userInstructionBlock}
+
+Job posting:
+${jobDescription}
+
+Tailoring task:
+1. Extract the JD's primary and secondary stack, responsibilities, seniority signals, domain language, architecture/testing/performance/accessibility expectations, and collaboration expectations.
+2. Map those JD signals to supported evidence from the resume.
+3. Rewrite experience bullets to mirror the JD wording and stack where truthful.
+4. Put JD-relevant skills first in every skill category.
+5. Add missing but important JD skills to Technical Skills for ATS and list unsupported ones in matchSummary as "Gap Skills:" or "Gap:".
+6. Include projects only when they strengthen JD fit, with a JD-aligned techStack string.
+7. Generate a JD-specific cover letter.`
+  }, 0.2);
+
+  return callOpenAI(apiKey, model, {
+    instructions: `You are the final resume alignment reviewer. Improve the provided JSON so it matches the JD more strongly while staying truthful to the source resume. Return JSON only with the same shape.
+
+Hard review gates:
+- The resume must be obviously tailored to the JD's primary stack, seniority, responsibilities, and domain language.
+- The first 2 bullets in the most recent relevant role must contain the strongest supported JD matches.
+- Technical Skills must place JD-required stack first in each category.
+- Important detected JD skills must appear in Technical Skills. Unsupported detected skills must appear in matchSummary as "Gap Skills:" or "Gap:".
+- Projects must have techStack values that mirror the JD where supported.
+- Cover letter must mention company/role when provided, primary stack, and 2-4 JD responsibilities/business themes.
+- Remove generic wording and replace it with JD-specific language supported by resume evidence.
+- Do not invent unsupported claims.
+- Preserve Cursor and OpenAI Codex in the AI-assisted development bullet.
+- No professional summary.
+- No Markdown formatting.
+- Return valid JSON only.`,
+    input: `Original resume text:
+${resumeText}
+
+Target company: ${company || 'Not specified'}
+Target position: ${targetPosition}
+
+Detected JD skill signals from the application scanner:
+${jdSkillSignals}${userInstructionBlock}
+
+Job posting:
+${jobDescription}
+
+First draft JSON:
+${firstDraft}
+
+Final review task:
+1. Score the draft internally against the JD.
+2. Rewrite weak bullets, skills ordering, project tech stacks, cover letter wording, and matchSummary.
+3. Make the final output more aligned than the draft, especially on JD stack, responsibilities, keywords, and exact JD phrasing.
+4. Keep all claims truthful to the provided resume evidence.
+5. Return the final JSON only.`
+  }, 0.15);
+}
+
+async function callOpenAI(
+  apiKey: string,
+  model: string,
+  body: { instructions: string; input: string },
+  temperature: number
+) {
+  const response = await fetch('https://api.openai.com/v1/responses', {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      model,
+      instructions: body.instructions,
+      input: body.input,
+      temperature,
+      store: false,
+      text: {
+        format: {
+          type: 'json_object'
+        }
+      }
+    })
+  });
+
+  const data = await response.json();
+  if (!response.ok) {
+    const message = data?.error?.message || `OpenAI request failed with status ${response.status}`;
+    throw new Error(message);
+  }
+
+  const text = data.output_text || data.output
+    ?.flatMap((item: any) => item.content || [])
+    ?.map((content: any) => content.text || '')
+    ?.join('')
+    ?.trim();
+
+  if (!text) throw new Error('OpenAI returned an empty response.');
+  return text;
 }
 
 async function callGemini(endpoint: string, apiKey: string, body: unknown) {
