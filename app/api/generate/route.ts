@@ -327,9 +327,7 @@ Rules:
 - Preserve and slightly enhance the AI-assisted development achievement with Cursor and OpenAI Codex explicitly named.
 - Cover letter must be efficient, confident, JD-specific, 180-260 words, and connect the candidate's evidence to the company, role, stack, and 2-4 JD responsibilities.
 - Return JSON only matching this shape: {"resume":{"name":"","title":"Frontend / Fullstack Developer","email":"","phone":"","location":"","linkedin":"","portfolio":"","experience":[{"company":"","role":"","location":"","duration":"","bullets":[]}],"skills":[],"projects":[{"name":"","techStack":"","bullets":[]}],"education":[{"degree":"","institute":"","year":""}],"certifications":[]},"coverLetter":"","matchSummary":[]}`,
-    input: `Return valid JSON only. Do not include any text outside the JSON object.
-
-Candidate fixed profile:
+    input: `Candidate fixed profile:
 Name: Rizwan Haider
 Experience: 10+ years
 Profile: Frontend / Fullstack Developer
@@ -375,9 +373,7 @@ Hard review gates:
 - No professional summary.
 - No Markdown formatting.
 - Return valid JSON only.`,
-    input: `Return valid JSON only. Do not include any text outside the JSON object.
-
-Original resume text:
+    input: `Original resume text:
 ${resumeText}
 
 Target company: ${company || 'Not specified'}
