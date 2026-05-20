@@ -20,17 +20,16 @@ npm install
 cp .env.example .env.local
 ```
 
-Add your OpenAI API key in `.env.local`:
+Add your Gemini API key in `.env.local`:
 
 ```bash
-OPENAI_API_KEY=your_key_here
-OPENAI_MODEL=gpt-4.1
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.5-pro
 ```
 
-Gemini is kept as a backup provider. If you want to use it later, remove `OPENAI_API_KEY` and add:
+For a faster/cheaper fallback, switch the model to:
 
 ```bash
-GEMINI_API_KEY=your_gemini_key_here
 GEMINI_MODEL=gemini-2.5-flash
 ```
 
@@ -48,7 +47,7 @@ http://localhost:3000
 
 ## Notes
 
-If both `OPENAI_API_KEY` and `GEMINI_API_KEY` are missing, the app returns sample fallback content so the UI still works.
+If `GEMINI_API_KEY` is missing, the app returns sample fallback content so the UI still works.
 
 ## Recommended next improvements
 
